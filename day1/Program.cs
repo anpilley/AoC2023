@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace aoc2023;
+namespace day1;
 
 class Program
 {
