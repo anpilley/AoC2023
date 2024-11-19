@@ -24,8 +24,8 @@ class Program
                 return;
             next = regex.Matches(line);
 
-            int total = 0;
-            int subtotal = 0;
+            long total = 0;
+            long subtotal = 0;
             int linecount = 0;
             while((line = reader.ReadLine()!) != null)
             {
@@ -55,21 +55,22 @@ class Program
 
     }
 
-    private static int Process(MatchCollection? prev, MatchCollection curr, MatchCollection? next)
+    private static long Process(MatchCollection? prev, MatchCollection curr, MatchCollection? next)
     {
-        int subtotal = 0;
+        long subtotal = 0;
 
         // safety check, and force  the collection to enumerate.
         if(curr== null || curr.Count() == 0)
             return 0;
+
+        Stack<int> gears = new Stack<int>();
 
         // loop every match in the current line
         for(int i = 0; i < curr.Count(); i++)
         {
             Match match = curr[i];
 
-            bool found = false;
-            if(match.Groups["digits"].Success == true)
+            if(match.Groups["symbol"].Success == true && match.Value == "*")
             {
                 // find the length of the string, and index
                 int len = match.Value.Length;
@@ -77,43 +78,41 @@ class Program
                 // find the range to look for
                 // we don't care if these go past the bounds, they're just a range for comparison.
                 int startidx = match.Index - 1;
-                int endidx = match.Index + len ;
+                int endidx = match.Index + 1 ;
+
+                // check for overlaps. An overlap is when !(endidx < p.Index || p.Index + len < startidx)
+                // see https://stackoverflow.com/questions/17148839/overlapping-line-segments-in-2d-space
                 
                 // iterate over previous if not null
                 if(prev != null)
                 {
                     foreach(Match p in prev)
                     {
-                        if(p.Groups["symbol"].Success == true)
+                        if(p.Groups["digits"].Success == true)
                         {
-                            if(p.Index >= startidx && p.Index <= endidx)
+                            
+                            if(!(endidx < p.Index || (p.Index + p.Value.Length - 1) < startidx)) 
                             {
                                 // match
-                                subtotal += Int32.Parse(match.Value);
-                                found = true;
-                                break;
+                                gears.Push(Int32.Parse(p.Value));
                             }
                         }
                     }
                 }
-
-                // move on to the next;
-                if(found)
-                    continue;
                 
                 // check current line before/after
                 if(i > 0)
                 {
-                    if(curr[i-1].Groups["symbol"].Success == true && curr[i-1].Index == startidx){
-                        subtotal += Int32.Parse(match.Value);
-                        continue;
+                    if(curr[i-1].Groups["digits"].Success == true && (curr[i-1].Index + curr[i-1].Value.Length -1) == startidx) 
+                    {
+                        gears.Push(Int32.Parse(curr[i-1].Value));
                     }
                 }
                 if(i < curr.Count() - 1)
                 {
-                    if(curr[i+1].Groups["symbol"].Success == true && curr[i+1].Index == endidx){
-                        subtotal += Int32.Parse(match.Value);
-                        continue;
+                    if(curr[i+1].Groups["digits"].Success == true && curr[i+1].Index == endidx) 
+                    {
+                        gears.Push(Int32.Parse(curr[i+1].Value));
                     }
                 }
 
@@ -122,20 +121,31 @@ class Program
                 {
                     foreach(Match n in next)
                     {
-                        if(n.Groups["symbol"].Success == true)
+                        if(n.Groups["digits"].Success == true)
                         {
-                            if(n.Index >= startidx && n.Index <= endidx)
+                            if(!(endidx < n.Index || (n.Index + n.Value.Length - 1) < startidx)) 
                             {
                                 // match
-                                subtotal += Int32.Parse(match.Value);
-                                found = true;
-                                break;
+                                gears.Push(Int32.Parse(n.Value));
                             }
                         }
                     }
-                    if(found)
-                        continue;
                 }
+
+                if(gears.Count == 2)
+                {
+                    // pop them both off, multiply, add to subtotal.
+                    int gearval = gears.Pop();
+                    gearval *= gears.Pop();
+                    subtotal += gearval;
+                }
+                else if (gears.Count > 2)
+                {
+                    Console.WriteLine(gears.ToString());
+                    throw new Exception("More gears than expected?!");
+                }
+
+                gears.Clear();
             }
         }
 
