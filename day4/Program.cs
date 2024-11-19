@@ -46,7 +46,7 @@ class Program
                 int wins = winners.Intersect(values).Count();
                 subtotal = wins == 1 ? 1 : (int)Math.Pow(2, wins-1);
                 total += subtotal;
-                Console.WriteLine($"card: {card}, {winners.Count()}, {values.Count()}: {wins}, subtotal: {subtotal}, running total {total}");
+                Console.WriteLine($"{card} {winners.Count()}, {values.Count()}: {wins}, subtotal: {subtotal}, running total {total}");
             }
         }
     }
