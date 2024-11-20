@@ -10,6 +10,9 @@ class Program
 
         using(var reader = new StreamReader("C:\\Dev\\Practice\\AoC2023\\aocday4.txt"))
         {
+            // stores how many copies of each card we have.
+            List<int> cardCount = new();
+
             string line;
             int total = 0;
             while((line = reader.ReadLine()!) != null)
@@ -42,11 +45,34 @@ class Program
                         }
                     }
                 }
+                
                 // total up winning matches.
                 int wins = winners.Intersect(values).Count();
-                subtotal = wins == 1 ? 1 : (int)Math.Pow(2, wins-1);
+
+                // get the multiplier from previous games for this card.
+                int multiplier = 0;
+                if(cardCount.Count > 0)
+                {
+                    multiplier += cardCount[0];
+                    cardCount.RemoveAt(0);
+                } 
+                
+                // update the multiplier for future cards.
+                for(int i = 0; i < wins; i++)
+                {
+                    if(cardCount.Count() > i)
+                    {
+                        cardCount[i]+= multiplier + 1;
+                    }
+                    else
+                    {
+                        cardCount.Add(1 + multiplier);
+                    }
+                }
+
+                subtotal = 1 + multiplier;
                 total += subtotal;
-                Console.WriteLine($"{card} {winners.Count()}, {values.Count()}: {wins}, subtotal: {subtotal}, running total {total}");
+                Console.WriteLine($"{card} : wins: {wins}, subtotal: {subtotal}, running total {total}");
             }
         }
     }
